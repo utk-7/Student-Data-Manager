@@ -1,8 +1,11 @@
+import hashlib
 from datetime import datetime
 
 #STORAGE STRUCTURES
-active_students = [] #dictionary of active student
-trash = [] #students who were removed 
+system_users = []  # Stores username & password hash for authentication
+registered_usernames = set()
+active_students = [] #active student
+trash = [] #students removed 
 registered_phones = set() #phone numbers which are registered
 
 #UTILITY FUNCTIONS
@@ -73,6 +76,10 @@ def get_valid_date():
             
         except ValueError:
             print("Invalid Format! Please enter date in DD-MM-YYYY format.")
+
+#PASSWORD HASHING:
+def hash_password(password_string):
+    return hashlib.sha256(password_string.encode()).hexdigest() #SHA-256 : Secure HAsh Algo 256 bit hash output
 
 #FEATURE FUNCTIONS:
 #ADD STUDENT:
@@ -247,8 +254,79 @@ def delete_management_menu():
         else:
             print("Selection out of range.")
 
+#USER AUTHENTICATION:
+def authenticate_user():
+    while True:
+        print(" SYSTEM SECURITY GATEWAY ")
+        print("1. Log In")
+        print("2. Sign Up")
+        print("3. Exit Application")
+        
+        choice = input("Select an option (1-3): ").strip()
+        
+        if choice == "2":
+            print("\n Create Account ")
+            while True:
+                username = input("Enter a new username: ").strip().lower() # Case-insensitive usernames
+                if not username:
+                    print("Username cannot be blank.")
+                    continue
+                
+                # Check username is already taken
+                if username in registered_usernames:
+                    print("Username not available")
+                    continue
+                break
+                
+            password = input("Enter password: ").strip()
+            while not password:
+                print("Password cannot be blank.")
+                password = input("Enter password: ").strip()
+                
+            # Secure password
+            secure_hash = hash_password(password)
+            
+            # Save account details
+            user_account = {
+                "username": username,
+                "password_hash": secure_hash
+            }
+            system_users.append(user_account)
+            registered_usernames.add(username)
+            
+            print(f"Account successfully created. You can now log in!")
+
+        elif choice == "1":
+            print("\n Account Login ")
+            username = input("Enter username: ").strip().lower()
+            password = input("Enter password: ").strip()
+            
+            # Hashing input password to compare it with the stored hash
+            input_password_hash = hash_password(password)
+            
+            login_success = False
+            
+            # Scan database for a matching username and password hash
+            for user in system_users:
+                if user["username"] == username and user["password_hash"] == input_password_hash:
+                    login_success = True
+                    break
+            
+            if login_success:
+                print(f"Access Granted!")
+                return True 
+            else:
+                print("Invalid username or password!")
+                
+        elif choice == "3":
+            print("\nSystem closing down. Thankyou!")
+            exit()
+        else:
+            print("Invalid selection. Please enter 1, 2, or 3.")
+
 #MAIN MENU - CLI
 def main():
+    authenticate_user()
     while True:
         print("     STUDENT DATA MANAGEMENT SYSTEM       ")
         print("1. Add Student Record")
