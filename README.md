@@ -1,28 +1,27 @@
-MAIN MENU - 
-Add Student
-Search Student (Name/Number)
-Filter by Age
-Delete & Recover
-Close
+STUDENT DATA MANAGEMENT SYSTEM :
 
-ADD STUDENT 
-Ask for Name - Stores name : Case insensitive
-Ask for DOB (DD-MM-YYYY) : Checks Format, Checks Year (Range 0:125) - Stores DOB 
-Using DOB, Calculates Age - using datetime library - stores age (AGE function) - Subtract dob from current date to get age
-Ask for Number : Checks 10 digits, only integers - Stores in registered phone numbers list
-Stores all this info in a dictionary, which is stored in a list called Active Student
+DAY 1 - Building the Student Data Management System :
 
-SEARCH STUDENT 
-Search by name or number
-Name - Makes case insensitive, then searches for substring in names
-Number - Matches number exact
+Imported - datetime 
+Storage structures : active students, trash, registered phone numbers 
+Utility functions : age calculation (by DOB), Phone number validation, DOB Validation 
+Feature functions : Add student, Search student (by name & phone number), Filter students by age, Delete Students (Temporarily (in trash), Permanently)
 
-FILTER BY AGE 
-Age range in asked
-All students falling in range are filtered (min < age < max)
+DAY 2 - Adding User Authentication :
 
-DELETE & MANAGE -
-Remove student temporarily - takes phone number and removes student from active list and adds them to trash bin lis - SOFT
-Checks Trash Bin items
-Restore student back from Trash bin to Active List
-Completely delete from database (Remove from active list and added no where) - HARD
+Storage structures : system users, reg usernames 
+Import - hashlib 
+Utility functions : Creating user account (username, password) - password secured using SHA256, User Authentication (Login, Sign Up)
+
+DAY 3 - Adding Forgot Password Option :
+
+The system asks for DOB while creating user account along with username and password. 
+Utility function changes : Creating user account (username, DOB, password), User authentication (Login, Sign UP, Forgot Password). 
+When user enters forgot password - the system asks for username and DOB. If matches then allows to create new password.
+
+DAY 4 - Importing Students from csv file
+
+Import csv 
+Feature function : Import students from csv file
+Takes student info from file named students.csv and then verifies the format and whether the information is valid or not. Then adds them into system.
+
