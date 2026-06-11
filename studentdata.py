@@ -1,3 +1,4 @@
+import csv
 import hashlib
 from datetime import datetime
 
@@ -254,88 +255,197 @@ def delete_management_menu():
         else:
             print("Selection out of range.")
 
+def create_user_account():
+    print("\n Create Admin Account ")
+    while True:
+        username = input("Enter a new username: ").strip().lower()
+        if not username:
+            print("Username cannot be blank.")
+            continue
+        if username in registered_usernames:
+            print("Username not available!")
+            continue
+        break
+        
+    dob = get_valid_date() 
+    password = input("Enter a secure password: ").strip()
+    while not password:
+        print("Password cannot be blank.")
+        password = input("Enter a secure password: ").strip()
+        
+    user_account = {
+        "username": username,
+        "password_hash": hash_password(password),
+        "dob": dob
+    }
+    system_users.append(user_account)
+    registered_usernames.add(username)
+    print(f"Account successfully created")
+
+
+def change_password():
+    print("\n Change Password Portal ")
+    username = input("Enter username: ").strip().lower()
+    dob_input = input("Enter your registered Date of Birth (DD-MM-YYYY): ").strip()
+    
+    target_user = None
+    for user in system_users:
+        if user["username"] == username:
+            target_user = user
+            break
+            
+    if not target_user:
+        print("Username not found.")
+        return
+
+    if target_user["dob"] != dob_input:
+        print("Date of Birth does not match.")
+        return
+        
+    # Validation Passed -> Proceed to change password
+    print("Identity Verified Successfully.")
+    new_password = input("Enter your new secure password: ").strip()
+    while not new_password:
+        print("Password cannot be blank.")
+        new_password = input("Enter your new secure password: ").strip()
+        
+    target_user["password_hash"] = hash_password(new_password)
+    print("Success! Your password has been updated. Please log in again.")
+
 #USER AUTHENTICATION:
 def authenticate_user():
     while True:
         print(" SYSTEM SECURITY GATEWAY ")
         print("1. Log In")
         print("2. Sign Up")
-        print("3. Exit Application")
+        print("3. Forgot Password")
+        print("4. Exit Application")
         
-        choice = input("Select an option (1-3): ").strip()
+        choice = input("Select an option (1-4): ").strip()
         
-        if choice == "2":
-            print("\n Create Account ")
-            while True:
-                username = input("Enter a new username: ").strip().lower() # Case-insensitive usernames
-                if not username:
-                    print("Username cannot be blank.")
-                    continue
-                
-                # Check username is already taken
-                if username in registered_usernames:
-                    print("Username not available")
-                    continue
-                break
-                
-            password = input("Enter password: ").strip()
-            while not password:
-                print("Password cannot be blank.")
-                password = input("Enter password: ").strip()
-                
-            # Secure password
-            secure_hash = hash_password(password)
-            
-            # Save account details
-            user_account = {
-                "username": username,
-                "password_hash": secure_hash
-            }
-            system_users.append(user_account)
-            registered_usernames.add(username)
-            
-            print(f"Account successfully created. You can now log in!")
-
-        elif choice == "1":
+        if choice == "1":
             print("\n Account Login ")
             username = input("Enter username: ").strip().lower()
             password = input("Enter password: ").strip()
             
-            # Hashing input password to compare it with the stored hash
-            input_password_hash = hash_password(password)
-            
+            input_hash = hash_password(password)
             login_success = False
             
-            # Scan database for a matching username and password hash
             for user in system_users:
-                if user["username"] == username and user["password_hash"] == input_password_hash:
+                if user["username"] == username and user["password_hash"] == input_hash:
                     login_success = True
                     break
             
             if login_success:
                 print(f"Access Granted!")
-                return True 
+                return True
             else:
                 print("Invalid username or password!")
                 
+        elif choice == "2":
+            create_user_account()
         elif choice == "3":
-            print("\nSystem closing down. Thankyou!")
+            change_password()
+        elif choice == "4":
+            print("\n System closing down. Goodbye!")
             exit()
         else:
-            print("Invalid selection. Please enter 1, 2, or 3.")
+            print("Invalid selection. Please enter a number between 1 and 4.")
+
+#IMPORT STUDENTS FROM CSV
+def import_students_from_csv():
+    print("\n Import Students from CSV File ")
+    filename = "students.csv"
+    
+    try:
+        with open(filename, mode='r', newline='', encoding='utf-8') as file:
+            # DictReader uses the first row as keys for each column
+            reader = csv.DictReader(file)
+            
+            # Verify:
+            expected_headers = {"Name", "DOB", "Phone"}
+            if not reader.fieldnames or not expected_headers.issubset(set(reader.fieldnames)):
+                print("CSV Structure Error! The file must contain columns: Name, DOB, Phone")
+                return
+               
+            success_count = 0
+            skipped_count = 0
+            row_number = 1  # Tracks rows
+            
+            for row in reader:
+                row_number += 1
+                
+                # Extract and clean values
+                name = row["Name"].strip() if row["Name"] else ""
+                dob_str = row["DOB"].strip() if row["DOB"] else ""
+                phone = row["Phone"].strip() if row["Phone"] else ""
+                
+                # Empty fields
+                if not name or not dob_str or not phone:
+                    print(f"Row {row_number} Skipped: Missing fields (Name/DOB/Phone).")
+                    skipped_count += 1
+                    continue
+                try:
+                    birth_date = datetime.strptime(dob_str, "%d-%m-%Y")
+                    today = datetime.today()
+                    age = today.year - birth_date.year
+                    has_birthday_passed = (today.month, today.day) >= (birth_date.month, birth_date.day)
+                    if not has_birthday_passed:
+                        age -= 1
+
+                    if age < 0 or age > 125:
+                        print(f"Row {row_number} Skipped: Age ({age}) is out of human limits (0-125).")
+                        skipped_count += 1
+                        continue
+                        
+                except ValueError:
+                    print(f"Row {row_number} Skipped: Invalid Date format '{dob_str}'. Must be DD-MM-YYYY.")
+                    skipped_count += 1
+                    continue
+                
+                # Check phone numbers
+                if not phone.isdigit() or len(phone) != 10:
+                    print(f"Row {row_number} Skipped: Check Phone number - '{phone}'")
+                    skipped_count += 1
+                    continue
+                
+                # Duplicate phone number
+                if phone in registered_phones:
+                    print(f"Row {row_number} Skipped: Phone number '{phone}' already exists in database registry.")
+                    skipped_count += 1
+                    continue
+
+                student_record = {
+                    "name": name,
+                    "dob": dob_str,
+                    "age": age,
+                    "phone": phone
+                }
+                
+                active_students.append(student_record)
+                registered_phones.add(phone)
+                success_count += 1
+                
+            print(" BULK IMPORT COMPLETION ")
+            print(f"Successfully Imported : {success_count} students.")
+            print(f"Rejected : {skipped_count} invalid rows.")
+            
+    except FileNotFoundError:
+        print(f"Operation Failed: The file '{filename}' was not found.")
 
 #MAIN MENU - CLI
 def main():
     authenticate_user()
     while True:
-        print("     STUDENT DATA MANAGEMENT SYSTEM       ")
+        print(" STUDENT DATA MANAGEMENT SYSTEM ")
         print("1. Add Student Record")
         print("2. Search Student Directory")
         print("3. Filter Students by Age")
         print("4. Delete & Recovery Operations Menu")
-        print("5. Close Program")
+        print("5. Import Students from CSV File")
+        print("6. Exit")
         
-        main_choice = input("Please select (1-5): ").strip()
+        main_choice = input("Please select (1-6): ").strip()
         
         if main_choice == "1":
             add_student()
@@ -346,10 +456,12 @@ def main():
         elif main_choice == "4":
             delete_management_menu()
         elif main_choice == "5":
-            print("\n System shut down successfully. Thankyou!")
+            import_students_from_csv() 
+        elif main_choice == "6":
+            print("\nSystem shut down successfully. Goodbye!")
             break
         else:
-            print("Invalid menu choice! Please select an option between 1 and 5.")
+            print("Invalid menu choice! Please select an option between 1 and 6.")
 
 if __name__ == "__main__":
     main()
