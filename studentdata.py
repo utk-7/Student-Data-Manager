@@ -434,6 +434,34 @@ def import_students_from_csv():
     except FileNotFoundError:
         print(f"Operation Failed: The file '{filename}' was not found.")
 
+#EXPORT STUDENTS TO CSV
+def export_students_to_csv():    
+    #don't create an empty file if there are no student
+    if not active_students:
+        print("ℹ️ Export Cancelled: No active student records to save.")
+        return
+        
+    filename = "exported_students.csv"
+    try:
+        with open(filename, mode='w', newline='', encoding='utf-8') as file: #file opened in write mode
+            fieldnames = ["Name", "DOB", "Age", "Phone"]
+            
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            
+            for student in active_students:
+                writer.writerow({
+                    "Name": student["name"],
+                    "DOB": student["dob"],
+                    "Age": student["age"],
+                    "Phone": student["phone"]
+                })
+                
+        print(f"Saved {len(active_students)} records to '{filename}'.")
+        
+    except IOError:
+        print(f"Storage Error")
+
 #MAIN MENU - CLI
 def main():
     authenticate_user()
@@ -443,10 +471,11 @@ def main():
         print("2. Search Student Directory")
         print("3. Filter Students by Age")
         print("4. Delete & Recovery Operations Menu")
-        print("5. Import Students from CSV File")
-        print("6. Exit")
+        print("5. Import Students from CSV File") # NEW CHOICE
+        print("6. Export Students to CSV File") # NEW CHOICE
+        print("7. Close Program")
         
-        main_choice = input("Please select (1-6): ").strip()
+        main_choice = input("Please select (1-7): ").strip()
         
         if main_choice == "1":
             add_student()
@@ -459,6 +488,8 @@ def main():
         elif main_choice == "5":
             import_students_from_csv() 
         elif main_choice == "6":
+            export_students_to_csv()
+        elif main_choice == "7":
             print("\nSystem shut down successfully. Goodbye!")
             break
         else:
